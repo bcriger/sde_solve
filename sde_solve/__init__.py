@@ -1,3 +1,3 @@
-import sde_solve
+from sde_solve import *
 
-__all__ = sde_solve.__all__
+__all__ = ['sde_platen_15']

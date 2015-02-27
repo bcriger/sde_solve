@@ -1,3 +1,6 @@
+from numpy import sqrt
+from numpy.random import randn
+
 __all__ = ['sde_platen_15']
 
 def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
