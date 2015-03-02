@@ -1,7 +1,7 @@
-from setuptools import setup, find_packages
+from distutils.core import setup
 
 setup(
     name = "sde_solve",
     version = "0.1",
-    packages = find_packages(),
+    packages = ['sde_solve'],
 )
