@@ -1,7 +1,7 @@
 from numpy import sqrt
 from numpy.random import randn
 
-__all__ = ['sde_platen_15']
+__all__ = ['sde_platen_15', 'platen_15_step']
 
 def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
     """
@@ -45,39 +45,46 @@ def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
         dW = dWs[idx]
         e_cb(t, rho, dW)
         if not(t == times[-1]):
-            #Ito Integrals
-            u_1, u_2 = dW/sqrt(dt), randn()
-            I_10  = 0.5 * dt**1.5 * (u_1 + u_2/sqrt(3.)) 
-            I_00  = 0.5 * dt**2 
-            I_01  = dW * dt - I_10 
-            I_11  = 0.5 * (dW**2 - dt) 
-            I_111 = 0.5 * (dW**2/3. - dt) * dW 
-            #Evaluations of DE functions
-            det_v  = det_f(t, rho)
-            stoc_v = stoc_f(t, rho) 
-            det_vp = det_f(t + dt, rho)
-            stoc_vp = stoc_f(t + dt, rho)
-            #Supporting Values
-            u_p = rho + det_v * dt + stoc_v * sqrt(dt)
-            u_m = rho + det_v * dt - stoc_v * sqrt(dt)
-            det_u_p = det_f(t, u_p)
-            det_u_m = det_f(t, u_m)
-            stoc_u_p = stoc_f(t, u_p)
-            stoc_u_m = stoc_f(t, u_m)
-            phi_p = u_p + stoc_u_p * sqrt(dt)
-            phi_m = u_p - stoc_u_p * sqrt(dt)
-            #Euler term
-            rho += det_v * dt + stoc_v * dW 
-            #1/(2 * sqrt(dt)) term
-            rho += ((det_u_p - det_u_m) * I_10 +
-                     (stoc_u_p - stoc_u_m) * I_11) / (2. * sqrt(dt)) 
-            #1/dt term
-            rho += ((det_vp - det_v) * I_00 +
-                     (stoc_vp - stoc_v) * I_01) / dt 
-            #first 1/(2 dt) term
-            rho += ((det_u_p - 2. * det_v + det_u_m) * I_00
-                     + (stoc_u_p - 2. * stoc_v + stoc_u_m) * I_01) / (2. * dt) 
-            #second 1/(2 dt) term
-            rho += (stoc_f(t, phi_p) - stoc_f(t, phi_m) 
-                        - stoc_u_p + stoc_u_m) * I_111 / (2. * dt) #
+            rho = platen_15_step(t, rho, dt, dW)
+
     pass #subroutine
+
+def platen_15_step(t, rho, dt, dW):
+    """
+    Advances rho(t) to rho(t+dt), subject to a stochastic kick of dW.
+    """
+    #Ito Integrals
+    u_1, u_2 = dW/sqrt(dt), randn()
+    I_10  = 0.5 * dt**1.5 * (u_1 + u_2/sqrt(3.)) 
+    I_00  = 0.5 * dt**2 
+    I_01  = dW * dt - I_10 
+    I_11  = 0.5 * (dW**2 - dt) 
+    I_111 = 0.5 * (dW**2/3. - dt) * dW 
+    #Evaluations of DE functions
+    det_v  = det_f(t, rho)
+    stoc_v = stoc_f(t, rho) 
+    det_vp = det_f(t + dt, rho)
+    stoc_vp = stoc_f(t + dt, rho)
+    #Supporting Values
+    u_p = rho + det_v * dt + stoc_v * sqrt(dt)
+    u_m = rho + det_v * dt - stoc_v * sqrt(dt)
+    det_u_p = det_f(t, u_p)
+    det_u_m = det_f(t, u_m)
+    stoc_u_p = stoc_f(t, u_p)
+    stoc_u_m = stoc_f(t, u_m)
+    phi_p = u_p + stoc_u_p * sqrt(dt)
+    phi_m = u_p - stoc_u_p * sqrt(dt)
+    #Euler term
+    rho += det_v * dt + stoc_v * dW 
+    #1/(2 * sqrt(dt)) term
+    rho ((det_u_p - det_u_m) * I_10 +
+             (stoc_u_p - stoc_u_m) * I_11) / (2. * sqrt(dt)) 
+    #1/dt term
+    rho += ((det_vp - det_v) * I_00 +
+             (stoc_vp - stoc_v) * I_01) / dt 
+    #first 1/(2 dt) term
+    rho += ((det_u_p - 2. * det_v + det_u_m) * I_00
+             + (stoc_u_p - 2. * stoc_v + stoc_u_m) * I_01) / (2. * dt) 
+    #second 1/(2 dt) term
+    rho += (stoc_f(t, phi_p) - stoc_f(t, phi_m) 
+                - stoc_u_p + stoc_u_m) * I_111 / (2. * dt) 
