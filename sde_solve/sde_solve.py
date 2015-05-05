@@ -1,7 +1,7 @@
 from numpy import sqrt
 from numpy.random import randn
 
-__all__ = ['sde_platen_15', 'platen_15_step', 'e_m_05', 'e_m_05_step']
+__all__ = ['sde_platen_15', 'platen_15_step', 'sde_e_m_05', 'e_m_05_step']
 
 def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
     """
@@ -89,4 +89,56 @@ def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
     rho += (stoc_f(t, phi_p) - stoc_f(t, phi_m) 
                 - stoc_u_p + stoc_u_m) * I_111 / (2. * dt) 
 
+    pass #subroutine
+
+def sde_e_m_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
+    """
+    Numerically integrates non-autonomous vector-valued stochastic
+    differential equations with a single Wiener term:
+
+    :math:`d \rho = \mu(t, \rho) dt + \sigma(t, \rho)dW`.
+
+    Uses the Euler-Maruyama order 0.5 scheme from page INSERT PAGE of 
+    Kloeden/Platen. 
+    
+    :param rho_init: Initial value of the solution to the SDE. Must be 
+    accepted by `det_f`, `stoc_f` and `e_cb`, see below.
+    :type rho_init: arbitrary
+    :param det_f: callback function which determines the deterministic 
+    contribution, the function :math:`\mu(t, \rho)` above. Must have 
+    signature `f(t, rho)`.
+    :type det_f: function
+    :param stoc_f:callback function which determines the stochastic 
+    contribution, the function :math:`\sigma(t, \rho)` above. Must have 
+    signature `f(t, rho)`.
+    :type stoc_f: function
+    :param times: the values of time over which integration is to take 
+    place. Uniform spacing is assumed, and no intermediate values of 
+    time are used internally.
+    :type times: iterable
+    :param dWs: the values of the Wiener increment at each value of 
+    time, for a given trajectory. Must be generated prior to call. 
+    :type dWs: iterable
+    :param e_cb: callback function which saves information about the 
+    solution `rho` at each timestep. Must have signature 
+    `f(t, rho, dW)`. 
+    :type e_cb: function
+    """
+    dt = times[1] - times[0] #fixed dt assumed
+
+    rho = rho_init
+    for idx, t in enumerate(times):
+        dW = dWs[idx]
+        e_cb(t, rho, dW)
+        if not(t == times[-1]):
+            rho = e_m_05_step(t, rho, det_f, stoc_f, dt, dW)
+
+    pass #subroutine
+
+def e_m_05_step(t, rho, det_f, stoc_f, dt, dW):
+    """
+    Advances rho(t) to rho(t+dt), subject to a stochastic kick of dW.
+    """
+    
+    rho += det_f(t, rho) * dt + stoc_f(t, rho) * dW 
     pass #subroutine
