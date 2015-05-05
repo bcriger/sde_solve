@@ -77,7 +77,7 @@ def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
     #Euler term
     rho += det_v * dt + stoc_v * dW 
     #1/(2 * sqrt(dt)) term
-    rho ((det_u_p - det_u_m) * I_10 +
+    rho += ((det_u_p - det_u_m) * I_10 +
              (stoc_u_p - stoc_u_m) * I_11) / (2. * sqrt(dt)) 
     #1/dt term
     rho += ((det_vp - det_v) * I_00 +
