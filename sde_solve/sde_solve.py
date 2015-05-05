@@ -1,7 +1,7 @@
 from numpy import sqrt
 from numpy.random import randn
 
-__all__ = ['sde_platen_15', 'platen_15_step']
+__all__ = ['sde_platen_15', 'platen_15_step', 'e_m_05', 'e_m_05_step']
 
 def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
     """
@@ -45,11 +45,11 @@ def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
         dW = dWs[idx]
         e_cb(t, rho, dW)
         if not(t == times[-1]):
-            rho = platen_15_step(t, rho, dt, dW)
+            rho = platen_15_step(t, rho, det_f, stoc_f, dt, dW)
 
     pass #subroutine
 
-def platen_15_step(t, rho, dt, dW):
+def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
     """
     Advances rho(t) to rho(t+dt), subject to a stochastic kick of dW.
     """
@@ -88,3 +88,5 @@ def platen_15_step(t, rho, dt, dW):
     #second 1/(2 dt) term
     rho += (stoc_f(t, phi_p) - stoc_f(t, phi_m) 
                 - stoc_u_p + stoc_u_m) * I_111 / (2. * dt) 
+
+    pass #subroutine
