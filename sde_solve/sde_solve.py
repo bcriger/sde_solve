@@ -89,7 +89,7 @@ def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
     rho += (stoc_f(t, phi_p) - stoc_f(t, phi_m) 
                 - stoc_u_p + stoc_u_m) * I_111 / (2. * dt) 
 
-    pass #subroutine
+    return rho
 
 def sde_e_m_05(rho_init, det_f, stoc_f, times, dWs, e_cb):
     """
@@ -141,4 +141,4 @@ def e_m_05_step(t, rho, det_f, stoc_f, dt, dW):
     """
 
     rho += det_f(t, rho) * dt + stoc_f(t, rho) * dW 
-    pass #subroutine
+    return rho
