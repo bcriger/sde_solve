@@ -91,7 +91,7 @@ def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
 
     pass #subroutine
 
-def sde_e_m_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
+def sde_e_m_05(rho_init, det_f, stoc_f, times, dWs, e_cb):
     """
     Numerically integrates non-autonomous vector-valued stochastic
     differential equations with a single Wiener term:
@@ -139,6 +139,6 @@ def e_m_05_step(t, rho, det_f, stoc_f, dt, dW):
     """
     Advances rho(t) to rho(t+dt), subject to a stochastic kick of dW.
     """
-    
+
     rho += det_f(t, rho) * dt + stoc_f(t, rho) * dW 
     pass #subroutine
