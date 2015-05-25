@@ -10,7 +10,7 @@ def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
 
     :math:`d \rho = \mu(t, \rho) dt + \sigma(t, \rho)dW`.
 
-    Uses the Platen order 1.5 scheme from page 379 of Kloeden/Platen. 
+    Uses the Platen order 1.5 scheme from page 382 of Kloeden/Platen. 
     Uses the result of exercise 5.2.7/PC-Exercise 1.4.12 to obtain 
     delta-Z (the multiple Ito integral I_{1, 0}) given the Wiener 
     increment delta-W.
