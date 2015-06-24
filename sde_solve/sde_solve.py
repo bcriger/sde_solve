@@ -9,6 +9,10 @@ __all__ = ['sde_platen_15', 'platen_15_step', 'sde_e_m_05', 'e_m_05_step',
             'sde_im_platen_15', 'im_platen_15_step', 'sde_milstein_1',
             'milstein_1_step', 'sde_im_milstein_1', 'im_milstein_1_step']
 
+# _steppers = [platen_15_step, e_m_05_step, platen_1_step, 
+#             im_e_m_05_step, im_platen_1_step, im_platen_15_step,
+#             milstein_1_step, im_milstein_1_step]
+
 def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
     """
     Numerically integrates non-autonomous vector-valued stochastic
@@ -125,12 +129,13 @@ def sde_e_m_05(rho_init, det_f, stoc_f, times, dWs, e_cb):
     dt = times[1] - times[0] #fixed dt assumed
 
     rho = rho_init
-    for idx, t in enumerate(times):
+    for idx, t in enumerate(times[:-1]):
         dW = dWs[idx]
         e_cb(t, rho, dW)
-        if not(t == times[-1]):
-            rho = e_m_05_step(t, rho, det_f, stoc_f, dt, dW)
+        rho = e_m_05_step(t, rho, det_f, stoc_f, dt, dW)
 
+    e_cb(t, rho, dWs[-1])
+        
     pass #subroutine
 
 def e_m_05_step(t, rho, det_f, stoc_f, dt, dW):
