@@ -234,13 +234,74 @@ def im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     
     upsilon, _ = _upsilons(rho, dt, det_v, stoc_v)
     
-    rho += _e_m_term(t, rho, None, stoc_f, dt, dW,
-                        alpha=alpha, det_v=det_v)
+    rho += _e_m_term(t, rho, None, stoc_f, dt, dW, alpha, det_v)
     
     rho += (stoc_f(t, upsilon) - stoc_v) * I_11 / sqrt(dt)
     
     rho = _implicit_corr(rho, mat_fut, dt, alpha)
 
+    pass #subroutine
+
+def sde_im_platen_15(rho_init, det_mat_f, stoc_f, times, dWs, e_cb):
+    """
+    Implicit order 1.5 solver, requires the deterministic term to be 
+    linear, represented by a function that returns a pair of matrices 
+    at a given time. These matrices represent the present and future 
+    drift terms.
+    """
+    alpha = 0.5 #Only value used in the book.
+    dt = times[1] - times[0] #fixed dt assumed
+
+    rho = rho_init
+    for idx, t in enumerate(times):
+        dW = dWs[idx]
+        e_cb(t, rho, dW)
+        if not(t == times[-1]):
+            mat_now, mat_fut = det_mat_f(t)
+            rho = im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, 
+                                    dt, dW, alpha=alpha)
+
+    pass #subroutine    
+
+def im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW,
+                        alpha=0.5, return_dZ=False):
+    """
+    Implicit strong order-1 Runge-Kutta, page 407.
+    """
+    _, _, I_01, I_10, I_11, I_111 = _ito_integrals(dt, dW)
+    
+    #Evaluations of DE functions
+    det_v  = np.dot(mat_now, rho)
+    stoc_v = stoc_f(t, rho)  
+    stoc_vp = stoc_f(t + dt, rho) 
+    
+    #Supporting Values
+    u_p, u_m = _upsilons(rho, dt, det_v, stoc_v)
+    det_u_p = np.dot(mat_now, u_p) 
+    det_u_m = np.dot(mat_now, u_m) 
+    stoc_u_p = stoc_f(t, u_p)
+    stoc_u_m = stoc_f(t, u_m)
+    phi_p , phi_m = _phis(dt, u_p, stoc_u_p)
+    stoc_phi_p = stoc_f(t, phi_p) 
+    stoc_phi_m = stoc_f(t, phi_m) 
+    
+    #Euler term
+    rho += _e_m_term(t, rho, None, stoc_f, dt, dW, alpha, det_v) 
+    
+    #1/dt term
+    rho += (stoc_vp - stoc_v) * I_01 / dt 
+    rho += 0.5 * (stoc_u_p - 2. * stoc_v + stoc_u_m) * I_01 / dt
+    rho += 0.5 * (stoc_phi_p - stoc_phi_m - stoc_u_p + stoc_u_m) * I_111 / dt
+    
+    #1/sqrt(dt) term
+    rho += 0.5 * (det_u_p - det_u_m) * (I_10 - 0.5 * dW * dt) / sqrt(dt)
+    rho += 0.5 * (stoc_u_p - stoc_u_m) * I_11 / sqrt(dt)
+
+    rho = _implicit_corr(rho, mat_fut, dt, alpha)
+    
+    if return_dZ:
+        return dZ #DAYYYNJUH! 
+    
     pass #subroutine
 
 
