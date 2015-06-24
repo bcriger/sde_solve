@@ -55,7 +55,7 @@ def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
     """
     Advances rho(t) to rho(t+dt), subject to a stochastic kick of dW.
     """
-    _, I_01, I_10, I_11, I_111 = _ito_integrals(dt, dW)
+    _, I_00, I_01, I_10, I_11, I_111 = _ito_integrals(dt, dW)
     #Evaluations of DE functions
     det_v  = det_f(t, rho)
     stoc_v = stoc_f(t, rho) 
@@ -92,7 +92,7 @@ def sde_e_m_05(rho_init, det_f, stoc_f, times, dWs, e_cb):
 
     :math:`d \rho = \mu(t, \rho) dt + \sigma(t, \rho)dW`.
 
-    Uses the Euler-Maruyama order 0.5 scheme from page INSERT PAGE of 
+    Uses the Euler-Maruyama order 0.5 scheme from page 341 of 
     Kloeden/Platen. 
     
     :param rho_init: Initial value of the solution to the SDE. Must be 
@@ -168,6 +168,47 @@ def platen_1_step(t, rho, det_f, stoc_f, dt, dW):
     
     pass #subroutine
 
+def sde_im_platen_1(rho_init, det_mat_f, stoc_f, times, dWs, e_cb,
+                    alpha=0.5):
+    """
+    Implicit order 1 solver, requires the deterministic term to be 
+    linear, represented by a function that returns a pair of matrices 
+    at a given time. These matrices represent the present and future 
+    drift terms.
+    """
+    dt = times[1] - times[0] #fixed dt assumed
+
+    rho = rho_init
+    for idx, t in enumerate(times):
+        dW = dWs[idx]
+        e_cb(t, rho, dW)
+        if not(t == times[-1]):
+            mat_now, mat_fut = det_mat_f(t)
+            rho = im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, 
+                                    dt, dW, alpha=alpha)
+
+    pass #subroutine    
+
+def im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
+    """
+    Implicit strong order-1 Runge-Kutta, page 407.
+    """
+    _, _, _, _, I_11, _ = _ito_integrals(dt, dW)
+    
+    det_v = np.dot(mat_now, rho)
+    stoc_v = stoc_f(t, rho)
+    
+    upsilon, _ = _upsilons(rho, dt, det_v, stoc_v)
+    
+    rho += _e_m_term(t, rho, det_f, stoc_f, dt, dW,
+                        alpha=alpha, det_v=det_v)
+    
+    rho += (stoc_f(t, upsilon) - stoc_v) * I_11 / sqrt(dt)
+    
+    rho = _implicit_corr(rho, mat_fut, dt, alpha)
+
+    pass #subroutine
+
 
 #---------------------Convenience Functions---------------------------#
 
@@ -187,7 +228,7 @@ def _ito_integrals(dt, dW=None):
     I_11  = 0.5 * (dW**2 - dt) 
     I_111 = 0.5 * (dW**2/3. - dt) * dW 
 
-    return dW, I_01, I_10, I_11, I_111
+    return dW, I_00, I_01, I_10, I_11, I_111
 
 def _upsilons(rho, dt, det_v, stoc_v):
     """
@@ -210,7 +251,7 @@ def _phis(dt, u_p, stoc_u_p):
     phi_m = u_p - stoc_u_p * sqrt(dt)
     return phi_p, phi_m
 
-def _e_m_term(t, rho, det_f, stoc_f, dt, dW, alpha=0.):
+def _e_m_term(t, rho, det_f, stoc_f, dt, dW, alpha=0., det_v=None):
     """
     Many stochastic schemes begin with the Euler-Maruyama term, adding 
     higher-order terms afterward. For this reason, we include the 
@@ -219,4 +260,18 @@ def _e_m_term(t, rho, det_f, stoc_f, dt, dW, alpha=0.):
     corresponding to a fully explicit scheme, and alpha == 1 being 
     fully implicit.
     """
-    return (1. - alpha) * det_f(t, rho) * dt + stoc_f(t, rho) * dW 
+    det_v = det_v if det_v else det_f(t, rho)
+    return (1. - alpha) * det_v * dt + stoc_f(t, rho) * dW
+
+def _implicit_corr(rho, mat_fut, dt, alpha):
+    """
+    Implicit steppers solve a vector-valued equation at every time 
+    step. Regardless of the order of the stepper, this function depends
+    on the current value of rho, the matrix-valued future drift term 
+    (the implicit steppers are only set up to work with linear drift
+    terms), the timestep, and the implicitness parameter alpha. I 
+    include it here as a convenience function.
+    """
+    #square matrix assumed; but only square matrices make sense.
+    id_mat = np.eye(mat_fut.shape[0], mat_fut.dtype)
+    return np.solve(id_mat - alpha * dt * mat_fut, rho)
