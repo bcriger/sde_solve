@@ -168,6 +168,40 @@ def platen_1_step(t, rho, det_f, stoc_f, dt, dW):
     
     pass #subroutine
 
+def sde_im_e_m_05(rho_init, det_mat_f, stoc_f, times, dWs, e_cb,
+                    alpha=0.5):
+    """
+    Implicit order 0.5 solver, requires the deterministic term to be 
+    linear, represented by a function that returns a pair of matrices 
+    at a given time. These matrices represent the present and future 
+    drift terms.
+    """
+    dt = times[1] - times[0] #fixed dt assumed
+
+    rho = rho_init
+    for idx, t in enumerate(times):
+        dW = dWs[idx]
+        e_cb(t, rho, dW)
+        if not(t == times[-1]):
+            mat_now, mat_fut = det_mat_f(t)
+            rho = im_e_m_05_step(t, rho, mat_now, mat_fut, stoc_f, 
+                                    dt, dW, alpha=alpha)
+
+    pass #subroutine    
+
+def im_e_m_05_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
+    """
+    Implicit Euler-Maruyama, page 396.
+    """
+    det_v = np.dot(mat_now, rho)
+    
+    rho += _e_m_term(t, rho, None, stoc_f, dt, dW,
+                        alpha=alpha, det_v=det_v)
+    
+    rho = _implicit_corr(rho, mat_fut, dt, alpha)
+
+    pass #subroutine
+
 def sde_im_platen_1(rho_init, det_mat_f, stoc_f, times, dWs, e_cb,
                     alpha=0.5):
     """
@@ -200,7 +234,7 @@ def im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     
     upsilon, _ = _upsilons(rho, dt, det_v, stoc_v)
     
-    rho += _e_m_term(t, rho, det_f, stoc_f, dt, dW,
+    rho += _e_m_term(t, rho, None, stoc_f, dt, dW,
                         alpha=alpha, det_v=det_v)
     
     rho += (stoc_f(t, upsilon) - stoc_v) * I_11 / sqrt(dt)
