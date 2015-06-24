@@ -1,4 +1,4 @@
-from numpy import sqrt, dot, eye
+from numpy import sqrt, dot, eye, isscalar
 from numpy.linalg import solve
 from numpy.random import randn
 
@@ -216,7 +216,7 @@ def milstein_1_step(t, rho, det_f, stoc_f, dt, dW, l1_stoc_f):
     
     return rho
 
-def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, l1_stoc_f):
+def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, l1_stoc_f, alpha=0.5):
     """
     Explicit strong order-1 Taylor scheme.
     """
@@ -295,5 +295,8 @@ def _implicit_corr(rho, mat_fut, dt, alpha):
     include it here as a convenience function.
     """
     #square matrix assumed; but only square matrices make sense.
-    id_mat = eye(mat_fut.shape[0], mat_fut.dtype)
-    return solve(id_mat - alpha * dt * mat_fut, rho)
+    if isscalar(mat_fut):
+        return -rho/(1 - alpha * dt * mat_fut)
+    else:
+        id_mat = eye(mat_fut.shape[0], mat_fut.dtype)
+        return solve(id_mat - alpha * dt * mat_fut, rho)
