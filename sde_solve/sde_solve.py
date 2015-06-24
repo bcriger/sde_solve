@@ -304,6 +304,69 @@ def im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW,
     
     pass #subroutine
 
+def sde_milstein_1(rho_init, det_f, stoc_f, l1_stoc_f, times, dWs, e_cb):
+    """
+    Milstein solver, requires an additional function to give the 
+    derivative $L^1 b$. Section 10.3, Page 346.
+    """
+    dt = times[1] - times[0] #fixed dt assumed
+
+    rho = rho_init
+    for idx, t in enumerate(times):
+        dW = dWs[idx]
+        e_cb(t, rho, dW)
+        if not(t == times[-1]):
+            rho = milstein_1_step(t, rho, det_f, stoc_f, l1_stoc_f, dt, dW)
+
+    pass #subroutine    
+
+def milstein_1_step(t, rho, det_f, stoc_f, dt, dW):
+    """
+    Explicit strong order-1 Taylor scheme.
+    """
+    _, _, _, _, I_11, _ = _ito_integrals(dt, dW)
+    
+    l1_stoc_v = l1_stoc_f(t, rho)
+    
+    rho += _e_m_term(t, rho, det_f, stoc_f, dt, dW)
+    rho += l1_stoc_v * I_11 
+    
+    pass #subroutine
+
+def sde_im_milstein_1(rho_init, det_mat_f, stoc_f, l1_stoc_f, times, dWs, e_cb):
+    """
+    Milstein solver, requires an additional function to give the 
+    derivative $L^1 b$. Also reuires linear drift. Section 10.3, Page 346.
+    """
+    dt = times[1] - times[0] #fixed dt assumed
+
+    rho = rho_init
+    for idx, t in enumerate(times):
+        dW = dWs[idx]
+        e_cb(t, rho, dW)
+        if not(t == times[-1]):
+            mat_now, mat_fut = det_mat_f(t)
+            rho = im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f,
+                                    l1_stoc_f, dt, dW)
+
+    pass #subroutine    
+
+def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, l1_stoc_f, dt, dW):
+    """
+    Explicit strong order-1 Taylor scheme.
+    """
+    _, _, _, _, I_11, _ = _ito_integrals(dt, dW)
+    
+    det_v = np.dot(mat_now, rho)
+    stoc_v = stoc_f(t, rho)
+    l1_stoc_v = l1_stoc_f(t, rho)
+    
+    rho += _e_m_term(t, rho, None, stoc_f, dt, dW, alpha, det_v)
+    rho += l1_stoc_v * I_11 
+    
+    rho = _implicit_corr(rho, mat_fut, dt, alpha)
+
+    pass #subroutine
 
 #---------------------Convenience Functions---------------------------#
 
@@ -313,8 +376,7 @@ def _ito_integrals(dt, dW=None):
     from I_00 up to I_111. This function calculates all of them in one 
     place, and returns them in lexical order.
     """
-    if dW is None:
-        dW = np.sqrt(dt) * randn()
+    dW = dW if dW else np.sqrt(dt) * randn()
 
     u_1, u_2 = dW/sqrt(dt), randn()
     I_10  = 0.5 * dt**1.5 * (u_1 + u_2/sqrt(3.)) 
