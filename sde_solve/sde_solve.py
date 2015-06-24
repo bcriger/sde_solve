@@ -3,17 +3,15 @@ from numpy.random import randn
 
 #TODO: Use a generic template for a solver given a stepper, then use lambdas to curry at the bottom.
 
-__all__ = ['sde_platen_15', 'platen_15_step', 'sde_e_m_05', 'e_m_05_step',
-            'sde_platen_1', 'platen_1_step', 'sde_im_e_m_05', 
-            'im_e_m_05_step', 'sde_im_platen_1', 'im_platen_1_step', 
-            'sde_im_platen_15', 'im_platen_15_step', 'sde_milstein_1',
-            'milstein_1_step', 'sde_im_milstein_1', 'im_milstein_1_step']
+__all__ = ['platen_15_step', 'e_m_05_step', 'platen_1_step', 
+            'im_e_m_05_step', 'im_platen_1_step', 'im_platen_15_step',
+            'milstein_1_step', 'im_milstein_1_step']
 
 # _steppers = [platen_15_step, e_m_05_step, platen_1_step, 
 #             im_e_m_05_step, im_platen_1_step, im_platen_15_step,
 #             milstein_1_step, im_milstein_1_step]
 
-def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
+def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
     """
     Numerically integrates non-autonomous vector-valued stochastic
     differential equations with a single Wiener term:
@@ -48,21 +46,6 @@ def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
     `f(t, rho, dW)`. 
     :type e_cb: function
     """
-    dt = times[1] - times[0] #fixed dt assumed
-
-    rho = rho_init
-    for idx, t in enumerate(times):
-        dW = dWs[idx]
-        e_cb(t, rho, dW)
-        if not(t == times[-1]):
-            rho = platen_15_step(t, rho, det_f, stoc_f, dt, dW)
-
-    pass #subroutine
-
-def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
-    """
-    Advances rho(t) to rho(t+dt), subject to a stochastic kick of dW.
-    """
     _, I_00, I_01, I_10, I_11, I_111 = _ito_integrals(dt, dW)
     #Evaluations of DE functions
     det_v  = det_f(t, rho)
@@ -93,7 +76,7 @@ def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
 
     return rho
 
-def sde_e_m_05(rho_init, det_f, stoc_f, times, dWs, e_cb):
+def e_m_05_step(t, rho, det_f, stoc_f, dt, dW):
     """
     Numerically integrates non-autonomous vector-valued stochastic
     differential equations with a single Wiener term:
@@ -126,40 +109,9 @@ def sde_e_m_05(rho_init, det_f, stoc_f, times, dWs, e_cb):
     `f(t, rho, dW)`. 
     :type e_cb: function
     """
-    dt = times[1] - times[0] #fixed dt assumed
-
-    rho = rho_init
-    for idx, t in enumerate(times[:-1]):
-        dW = dWs[idx]
-        e_cb(t, rho, dW)
-        rho = e_m_05_step(t, rho, det_f, stoc_f, dt, dW)
-
-    e_cb(t, rho, dWs[-1])
-        
-    pass #subroutine
-
-def e_m_05_step(t, rho, det_f, stoc_f, dt, dW):
-    """
-    Advances rho(t) to rho(t+dt), subject to a stochastic kick of dW.
-    """
 
     rho += _e_m_term(t, rho, det_f, stoc_f, dt, dW) 
     return rho
-
-def sde_platen_1(rho_init, det_f, stoc_f, times, dWs, e_cb):
-    """
-    Does the same thing as the order-1.5 solver above, but at order 1.
-    """
-    dt = times[1] - times[0] #fixed dt assumed
-
-    rho = rho_init
-    for idx, t in enumerate(times):
-        dW = dWs[idx]
-        e_cb(t, rho, dW)
-        if not(t == times[-1]):
-            rho = platen_1_step(t, rho, det_f, stoc_f, dt, dW)
-
-    pass #subroutine    
 
 def platen_1_step(t, rho, det_f, stoc_f, dt, dW):
     """
@@ -177,27 +129,6 @@ def platen_1_step(t, rho, det_f, stoc_f, dt, dW):
     
     return rho
 
-def sde_im_e_m_05(rho_init, det_mat_f, stoc_f, times, dWs, e_cb,
-                    alpha=0.5):
-    """
-    Implicit order 0.5 solver, requires the deterministic term to be 
-    linear, represented by a function that returns a pair of matrices 
-    at a given time. These matrices represent the present and future 
-    drift terms.
-    """
-    dt = times[1] - times[0] #fixed dt assumed
-
-    rho = rho_init
-    for idx, t in enumerate(times):
-        dW = dWs[idx]
-        e_cb(t, rho, dW)
-        if not(t == times[-1]):
-            mat_now, mat_fut = det_mat_f(t)
-            rho = im_e_m_05_step(t, rho, mat_now, mat_fut, stoc_f, 
-                                    dt, dW, alpha=alpha)
-
-    pass #subroutine    
-
 def im_e_m_05_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     """
     Implicit Euler-Maruyama, page 396.
@@ -210,27 +141,6 @@ def im_e_m_05_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     rho = _implicit_corr(rho, mat_fut, dt, alpha)
 
     return rho
-
-def sde_im_platen_1(rho_init, det_mat_f, stoc_f, times, dWs, e_cb,
-                    alpha=0.5):
-    """
-    Implicit order 1 solver, requires the deterministic term to be 
-    linear, represented by a function that returns a pair of matrices 
-    at a given time. These matrices represent the present and future 
-    drift terms.
-    """
-    dt = times[1] - times[0] #fixed dt assumed
-
-    rho = rho_init
-    for idx, t in enumerate(times):
-        dW = dWs[idx]
-        e_cb(t, rho, dW)
-        if not(t == times[-1]):
-            mat_now, mat_fut = det_mat_f(t)
-            rho = im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, 
-                                    dt, dW, alpha=alpha)
-
-    pass #subroutine    
 
 def im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     """
@@ -250,27 +160,6 @@ def im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     rho = _implicit_corr(rho, mat_fut, dt, alpha)
 
     return rho
-
-def sde_im_platen_15(rho_init, det_mat_f, stoc_f, times, dWs, e_cb):
-    """
-    Implicit order 1.5 solver, requires the deterministic term to be 
-    linear, represented by a function that returns a pair of matrices 
-    at a given time. These matrices represent the present and future 
-    drift terms.
-    """
-    alpha = 0.5 #Only value used in the book.
-    dt = times[1] - times[0] #fixed dt assumed
-
-    rho = rho_init
-    for idx, t in enumerate(times):
-        dW = dWs[idx]
-        e_cb(t, rho, dW)
-        if not(t == times[-1]):
-            mat_now, mat_fut = det_mat_f(t)
-            rho = im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, 
-                                    dt, dW, alpha=alpha)
-
-    pass #subroutine    
 
 def im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW,
                         alpha=0.5, return_dZ=False):
@@ -313,23 +202,7 @@ def im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW,
     
     return rho
 
-def sde_milstein_1(rho_init, det_f, stoc_f, l1_stoc_f, times, dWs, e_cb):
-    """
-    Milstein solver, requires an additional function to give the 
-    derivative $L^1 b$. Section 10.3, Page 346.
-    """
-    dt = times[1] - times[0] #fixed dt assumed
-
-    rho = rho_init
-    for idx, t in enumerate(times):
-        dW = dWs[idx]
-        e_cb(t, rho, dW)
-        if not(t == times[-1]):
-            rho = milstein_1_step(t, rho, det_f, stoc_f, l1_stoc_f, dt, dW)
-
-    pass #subroutine    
-
-def milstein_1_step(t, rho, det_f, stoc_f, l1_stoc_f, dt, dW):
+def milstein_1_step(t, rho, det_f, stoc_f, dt, dW, l1_stoc_f):
     """
     Explicit strong order-1 Taylor scheme.
     """
@@ -341,24 +214,6 @@ def milstein_1_step(t, rho, det_f, stoc_f, l1_stoc_f, dt, dW):
     rho += l1_stoc_v * I_11 
     
     return rho
-
-def sde_im_milstein_1(rho_init, det_mat_f, stoc_f, l1_stoc_f, times, dWs, e_cb):
-    """
-    Milstein solver, requires an additional function to give the 
-    derivative $L^1 b$. Also reuires linear drift. Section 10.3, Page 346.
-    """
-    dt = times[1] - times[0] #fixed dt assumed
-
-    rho = rho_init
-    for idx, t in enumerate(times):
-        dW = dWs[idx]
-        e_cb(t, rho, dW)
-        if not(t == times[-1]):
-            mat_now, mat_fut = det_mat_f(t)
-            rho = im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f,
-                                    l1_stoc_f, dt, dW)
-
-    pass #subroutine    
 
 def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, l1_stoc_f, dt, dW):
     """
