@@ -3,7 +3,11 @@ from numpy.random import randn
 
 #TODO: Use a generic template for a solver given a stepper, then use lambdas to curry at the bottom.
 
-__all__ = ['sde_platen_15', 'platen_15_step', 'sde_e_m_05', 'e_m_05_step']
+__all__ = ['sde_platen_15', 'platen_15_step', 'sde_e_m_05', 'e_m_05_step',
+            'sde_platen_1', 'platen_1_step', 'sde_im_e_m_05', 
+            'im_e_m_05_step', 'sde_im_platen_1', 'im_platen_1_step', 
+            'sde_im_platen_15', 'im_platen_15_step', 'sde_milstein_1',
+            'milstein_1_step', 'sde_im_milstein_1', 'im_milstein_1_step']
 
 def sde_platen_15(rho_init, det_f, stoc_f, times, dWs, e_cb):
     """
@@ -320,7 +324,7 @@ def sde_milstein_1(rho_init, det_f, stoc_f, l1_stoc_f, times, dWs, e_cb):
 
     pass #subroutine    
 
-def milstein_1_step(t, rho, det_f, stoc_f, dt, dW):
+def milstein_1_step(t, rho, det_f, stoc_f, l1_stoc_f, dt, dW):
     """
     Explicit strong order-1 Taylor scheme.
     """
