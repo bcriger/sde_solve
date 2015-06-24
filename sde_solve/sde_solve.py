@@ -170,7 +170,7 @@ def platen_1_step(t, rho, det_f, stoc_f, dt, dW):
     rho += _e_m_term(t, rho, det_f, stoc_f, dt, dW)
     rho += (stoc_f(t, upsilon) - stoc_v) * I_11 / sqrt(dt)
     
-    pass #subroutine
+    return rho
 
 def sde_im_e_m_05(rho_init, det_mat_f, stoc_f, times, dWs, e_cb,
                     alpha=0.5):
@@ -204,7 +204,7 @@ def im_e_m_05_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     
     rho = _implicit_corr(rho, mat_fut, dt, alpha)
 
-    pass #subroutine
+    return rho
 
 def sde_im_platen_1(rho_init, det_mat_f, stoc_f, times, dWs, e_cb,
                     alpha=0.5):
@@ -244,7 +244,7 @@ def im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     
     rho = _implicit_corr(rho, mat_fut, dt, alpha)
 
-    pass #subroutine
+    return rho
 
 def sde_im_platen_15(rho_init, det_mat_f, stoc_f, times, dWs, e_cb):
     """
@@ -304,9 +304,9 @@ def im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW,
     rho = _implicit_corr(rho, mat_fut, dt, alpha)
     
     if return_dZ:
-        return dZ #DAYYYNJUH! 
+        return rho, dZ
     
-    pass #subroutine
+    return rho
 
 def sde_milstein_1(rho_init, det_f, stoc_f, l1_stoc_f, times, dWs, e_cb):
     """
@@ -335,7 +335,7 @@ def milstein_1_step(t, rho, det_f, stoc_f, l1_stoc_f, dt, dW):
     rho += _e_m_term(t, rho, det_f, stoc_f, dt, dW)
     rho += l1_stoc_v * I_11 
     
-    pass #subroutine
+    return rho
 
 def sde_im_milstein_1(rho_init, det_mat_f, stoc_f, l1_stoc_f, times, dWs, e_cb):
     """
@@ -370,7 +370,7 @@ def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, l1_stoc_f, dt, dW):
     
     rho = _implicit_corr(rho, mat_fut, dt, alpha)
 
-    pass #subroutine
+    return rho
 
 #---------------------Convenience Functions---------------------------#
 
