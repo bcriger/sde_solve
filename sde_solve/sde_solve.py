@@ -1,4 +1,5 @@
-from numpy import sqrt, dot
+from numpy import sqrt, dot, eye
+from numpy.linalg import solve
 from numpy.random import randn
 
 #TODO: Use a generic template for a solver given a stepper, then use lambdas to curry at the bottom.
@@ -240,7 +241,7 @@ def _ito_integrals(dt, dW=None):
     from I_00 up to I_111. This function calculates all of them in one 
     place, and returns them in lexical order.
     """
-    dW = dW if dW else np.sqrt(dt) * randn()
+    dW = dW if dW else sqrt(dt) * randn()
 
     u_1, u_2 = dW/sqrt(dt), randn()
     I_10  = 0.5 * dt**1.5 * (u_1 + u_2/sqrt(3.)) 
@@ -294,5 +295,5 @@ def _implicit_corr(rho, mat_fut, dt, alpha):
     include it here as a convenience function.
     """
     #square matrix assumed; but only square matrices make sense.
-    id_mat = np.eye(mat_fut.shape[0], mat_fut.dtype)
-    return np.solve(id_mat - alpha * dt * mat_fut, rho)
+    id_mat = eye(mat_fut.shape[0], mat_fut.dtype)
+    return solve(id_mat - alpha * dt * mat_fut, rho)
