@@ -1,4 +1,4 @@
-from numpy import sqrt
+from numpy import sqrt, dot
 from numpy.random import randn
 
 #TODO: Use a generic template for a solver given a stepper, then use lambdas to curry at the bottom.
@@ -133,7 +133,7 @@ def im_e_m_05_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     """
     Implicit Euler-Maruyama, page 396.
     """
-    det_v = np.dot(mat_now, rho)
+    det_v = dot(mat_now, rho)
     
     rho += _e_m_term(t, rho, None, stoc_f, dt, dW,
                         alpha=alpha, det_v=det_v)
@@ -148,7 +148,7 @@ def im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
     """
     _, _, _, _, I_11, _ = _ito_integrals(dt, dW)
     
-    det_v = np.dot(mat_now, rho)
+    det_v = dot(mat_now, rho)
     stoc_v = stoc_f(t, rho)
     
     upsilon, _ = _upsilons(rho, dt, det_v, stoc_v)
@@ -169,14 +169,14 @@ def im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW,
     _, _, I_01, I_10, I_11, I_111 = _ito_integrals(dt, dW)
     
     #Evaluations of DE functions
-    det_v  = np.dot(mat_now, rho)
+    det_v  = dot(mat_now, rho)
     stoc_v = stoc_f(t, rho)  
     stoc_vp = stoc_f(t + dt, rho) 
     
     #Supporting Values
     u_p, u_m = _upsilons(rho, dt, det_v, stoc_v)
-    det_u_p = np.dot(mat_now, u_p) 
-    det_u_m = np.dot(mat_now, u_m) 
+    det_u_p = dot(mat_now, u_p) 
+    det_u_m = dot(mat_now, u_m) 
     stoc_u_p = stoc_f(t, u_p)
     stoc_u_m = stoc_f(t, u_m)
     phi_p , phi_m = _phis(dt, u_p, stoc_u_p)
@@ -215,13 +215,13 @@ def milstein_1_step(t, rho, det_f, stoc_f, dt, dW, l1_stoc_f):
     
     return rho
 
-def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, l1_stoc_f, dt, dW):
+def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, l1_stoc_f):
     """
     Explicit strong order-1 Taylor scheme.
     """
     _, _, _, _, I_11, _ = _ito_integrals(dt, dW)
     
-    det_v = np.dot(mat_now, rho)
+    det_v = dot(mat_now, rho)
     stoc_v = stoc_f(t, rho)
     l1_stoc_v = l1_stoc_f(t, rho)
     
