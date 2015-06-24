@@ -296,7 +296,7 @@ def _implicit_corr(rho, mat_fut, dt, alpha):
     """
     #square matrix assumed; but only square matrices make sense.
     if isscalar(mat_fut):
-        return -rho/(1 - alpha * dt * mat_fut)
+        return rho / (1 - alpha * dt * mat_fut)
     else:
         id_mat = eye(mat_fut.shape[0], mat_fut.dtype)
         return solve(id_mat - alpha * dt * mat_fut, rho)
