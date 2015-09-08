@@ -165,7 +165,7 @@ def im_platen_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, alpha=0.5):
 def im_platen_15_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW,
                         alpha=0.5, return_dZ=False):
     """
-    Implicit strong order-1 Runge-Kutta, page 407.
+    Implicit strong order-1.5 Runge-Kutta.
     """
     _, _, I_01, I_10, I_11, I_111 = _ito_integrals(dt, dW)
     
@@ -223,7 +223,6 @@ def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, l1_stoc_f, alph
     _, _, _, _, I_11, _ = _ito_integrals(dt, dW)
     
     det_v = dot(mat_now, rho)
-    stoc_v = stoc_f(t, rho)
     l1_stoc_v = l1_stoc_f(t, rho)
     
     rho += _e_m_term(t, rho, None, stoc_f, dt, dW, alpha, det_v)
