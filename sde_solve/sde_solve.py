@@ -24,9 +24,11 @@ def platen_15_step(t, rho, det_f, stoc_f, dt, dW):
     delta-Z (the multiple Ito integral I_{1, 0}) given the Wiener 
     increment delta-W.
 
-    :param rho_init: Initial value of the solution to the SDE. Must be 
+    :param t: Value of time
+    :type t: float
+    :param rho: Current value of the solution to the SDE. Must be 
     accepted by `det_f`, `stoc_f` and `e_cb`, see below.
-    :type rho_init: arbitrary
+    :type rho: arbitrary, must support arithmetic operators
     :param det_f: callback function which determines the deterministic 
     contribution, the function :math:`\mu(t, \rho)` above. Must have 
     signature `f(t, rho)`.
