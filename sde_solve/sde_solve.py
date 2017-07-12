@@ -2,7 +2,8 @@ from numpy import sqrt, dot, eye, isscalar
 from numpy.linalg import solve
 from numpy.random import randn
 
-#TODO: Use a generic template for a solver given a stepper, then use lambdas to curry at the bottom.
+#TODO: Use a generic template for a solver given a stepper, then use
+#lambdas to curry at the bottom.
 
 __all__ = ['platen_15_step', 'e_m_05_step', 'platen_1_step', 
             'im_e_m_05_step', 'im_platen_1_step', 'im_platen_15_step',
@@ -220,7 +221,7 @@ def milstein_1_step(t, rho, det_f, stoc_f, dt, dW, l1_stoc_f):
 
 def im_milstein_1_step(t, rho, mat_now, mat_fut, stoc_f, dt, dW, l1_stoc_f, alpha=0.5):
     """
-    Explicit strong order-1 Taylor scheme.
+    Semi-implicit strong order-1 Taylor scheme.
     """
     _, _, _, _, I_11, _ = _ito_integrals(dt, dW)
     
@@ -245,7 +246,7 @@ def _ito_integrals(dt, dW=None):
     dW = dW if dW else sqrt(dt) * randn()
 
     u_1, u_2 = dW/sqrt(dt), randn()
-    I_10  = 0.5 * dt**1.5 * (u_1 + u_2/sqrt(3.)) 
+    I_10  = 0.5 * dt**1.5 * (u_1 + u_2 / sqrt(3.)) 
     I_00  = 0.5 * dt**2 
     I_01  = dW * dt - I_10 
     I_11  = 0.5 * (dW**2 - dt) 
