@@ -284,7 +284,8 @@ def _e_m_term(t, rho, det_f, stoc_f, dt, dW, alpha=0., det_v=None):
     corresponding to a fully explicit scheme, and alpha == 1 being 
     fully implicit.
     """
-    det_v = det_v if det_v else det_f(t, rho)
+    if det_v is None:
+        det_v = det_f(t, rho)
     return (1. - alpha) * det_v * dt + stoc_f(t, rho) * dW
 
 def _implicit_corr(rho, mat_fut, dt, alpha):
@@ -300,5 +301,5 @@ def _implicit_corr(rho, mat_fut, dt, alpha):
     if isscalar(mat_fut):
         return rho / (1 - alpha * dt * mat_fut)
     else:
-        id_mat = eye(mat_fut.shape[0], mat_fut.dtype)
+        id_mat = eye(mat_fut.shape[0], dtype=mat_fut.dtype)
         return solve(id_mat - alpha * dt * mat_fut, rho)
